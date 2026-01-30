@@ -1,81 +1,113 @@
-// Import necessary components from react-router-dom and other parts of the application.
-import { Link } from "react-router-dom";
-import React, { useState } from "react";
-import useGlobalReducer from "../hooks/useGlobalReducer"; // Custom hook for accessing the global state.
-
+import { Link, useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useStore } from "../hooks/useGlobalReducer"; 
 
 export const NewContact = () => {
+  const { state, dispatch } = useStore();
+  const { id } = useParams(); // capturamos el ID si existe
+  const navigate = useNavigate();
+  const agendaSlug = "pzd3v";
+
   const [contact, setContact] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    address: "",
+    name: "", email: "", phone: "", address: ""
   });
 
+  // Si estamos editando, buscamos el contacto en el store y rellenamos el form
+  useEffect(() => {
+    if (id && state.contacts.length > 0) {
+      const contactToEdit = state.contacts.find(c => c.id === parseInt(id));
+      if (contactToEdit) setContact(contactToEdit);
+    }
+  }, [id, state.contacts]);
+
   const handleChange = (e) => {
-    setContact({
-      ...contact,
-      [e.target.name]: e.target.value,
-    });
+    setContact({ ...contact, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // backend
+    
+    // Decidimos si es: ¿POST o PUT?
+    const method = id ? "PUT" : "POST";
+    const url = id 
+      ? `https://playground.4geeks.com/contact/agendas/${agendaSlug}/contacts/${id}`
+      : `https://playground.4geeks.com/contact/agendas/${agendaSlug}/contacts`;
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        //Actualizamos el estado global según la acción
+        if (id) {
+          dispatch({ type: "UPDATE_CONTACT", payload: data });
+        } else {
+          dispatch({ type: "ADD_CONTACT", payload: data });
+        }
+        
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Error en la operación:", error);
+    }
   };
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "600px" }}>
-      <h2 className="text-center mb-4">Add a new contact</h2>
+    <div className="container mt-5">
+      <h2 className="text-center">{id ? "Update Contact" : "Add a new contact"}</h2>
       <form onSubmit={handleSubmit}>
-        <div className="mb-3">
+         <div className="mb-3">
           <label className="form-label">Full Name</label>
           <input
             type="text"
-            name="fullName"
+            name="name" // IMPORTANTE: que coincida con la key del estado
             className="form-control"
-            placeholder="Full Name"
+            placeholder="Enter Name"
+            value={contact.name}
             onChange={handleChange}
+            required
           />
-        </div>
-
-        <div className="mb-3">
           <label className="form-label">Email</label>
           <input
             type="email"
-            name="email"
+            name="email" // IMPORTANTE: que coincida con la key del estado
             className="form-control"
-            placeholder="Enter email"
+            placeholder="Enter Email"
+            value={contact.email}
             onChange={handleChange}
+            required
           />
-        </div>
-        <div className="mb-3">
           <label className="form-label">Phone</label>
           <input
-            type="tel"
-            name="phone"
+            type="number"
+            name="phone" // IMPORTANTE: que coincida con la key del estado
             className="form-control"
-            placeholder="Enter phone"
+            placeholder="Enter Phone"
+            value={contact.phone}
             onChange={handleChange}
+            required
           />
-        </div>
-        <div className="mb-3">
           <label className="form-label">Address</label>
           <input
             type="text"
-            name="address"
+            name="address" // IMPORTANTE: que coincida con la key del estado
             className="form-control"
-            placeholder="Enter address"
+            placeholder="Enter Address"
+            value={contact.address}
             onChange={handleChange}
+            required
           />
         </div>
         <button type="submit" className="btn btn-primary w-100">
-          Save Contact
+          {id ? "Update" : "Save"}
         </button>
       </form>
-      <Link to="/">
-        <button className="btn text-primary">or get back to contacts</button>
-      </Link>
     </div>
   );
 };
+       
