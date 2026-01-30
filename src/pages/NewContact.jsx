@@ -59,6 +59,9 @@ export const NewContact = () => {
 
   return (
     <div className="container mt-5">
+    <Link to={`/`} className="btn text-primary mx-3">
+          <i class="fa-solid fa-arrow-left display-5"></i>
+        </Link>  
       <h2 className="text-center">{id ? "Update Contact" : "Add a new contact"}</h2>
       <form onSubmit={handleSubmit}>
          <div className="mb-3">
@@ -107,6 +110,9 @@ export const NewContact = () => {
           {id ? "Update" : "Save"}
         </button>
       </form>
+      <Link to={`/`} className="btn text-primary mx-3">
+      <p><a class="link-offset-1" href="#">or get back to contacts</a></p>
+        </Link> 
     </div>
   );
 };
